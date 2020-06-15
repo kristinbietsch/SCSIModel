@@ -1,0 +1,12 @@
+name: ShinyApp060420b
+title: ShinyApp060420b
+username:
+account: track20
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2410154
+bundleId: 3273882
+url: https://track20.shinyapps.io/ShinyApp060420b/
+when: 1592253449.87775
+asMultiple: FALSE
+asStatic: FALSE
