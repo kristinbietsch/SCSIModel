@@ -8,15 +8,7 @@ library(tidyr)
 #setwd("C:/Users/KristinBietsch/files/Track20/Win Requests/Self Injections/DMPASC_SI")
 
 # Read in data
-baseline <- read.csv("data/BaselineData052920.csv")
-default <- read.csv("data/DefaultData062220.csv")
-default <- default %>% select(-Country)
-parameters <- read.csv("data/ParameterData061820.csv")
-
-# combine
-baseline <- full_join(baseline, default, by="iso")
-
-
+baseline <- read.csv("data/ModelData062220.csv")
 
 
 
@@ -77,16 +69,11 @@ ui <- fluidPage(
       plotOutput("plot1"),
       hr(),
       
-
+      
       dataTableOutput('table'),
-      
-      
+      hr(),
       
       textOutput("Notes")
-      
-    
-      
-      
       
       
       
@@ -101,48 +88,43 @@ server <- function(input, output, session) {
   vals <- reactiveValues()
   observe({
     
-    vals$iso <- baseline$iso[baseline$Country==input$var]
+    vals$iso <- baseline$iso[baseline$Country %in% input$var]
   })
   
   observeEvent(input$var,{
     
     updateNumericInput(session,'inj_to_si',
-                       value=(parameters$inj_to_si[parameters$iso==vals$iso]))
+                       value=(baseline$inj_to_si[baseline$Country %in% input$var & baseline$Year==2019]))
     updateNumericInput(session,'stm_to_si',
-                       value=(parameters$stm_to_si[parameters$iso==vals$iso]))
+                       value=(baseline$stm_to_si[baseline$Country %in% input$var & baseline$Year==2019]))
     updateNumericInput(session,'nu_to_si',
-                       value=(parameters$nu_to_si[parameters$iso==vals$iso]))
+                       value=(baseline$nu_to_si[baseline$Country %in% input$var & baseline$Year==2019]))
     updateNumericInput(session,'si_bonus',
-                       value=(parameters$si_bonus[parameters$iso==vals$iso]))
+                       value=(baseline$si_bonus[baseline$Country %in% input$var & baseline$Year==2019]))
     updateNumericInput(session,'max_siofsc',
-                       value=(parameters$max_siofsc[parameters$iso==vals$iso]))
+                       value=(baseline$max_siofsc[baseline$Country %in% input$var & baseline$Year==2019]))
     updateNumericInput(session,'year_sc',
-                       value=(parameters$year_sc[parameters$iso==vals$iso]))
+                       value=(baseline$year_sc[baseline$Country %in% input$var & baseline$Year==2019]))
     updateNumericInput(session,'year_si',
-                       value=(parameters$year_si[parameters$iso==vals$iso]))
+                       value=(baseline$year_si[baseline$Country %in% input$var & baseline$Year==2019]))
     
 
     
   })
   
-  
-
-  
   dat<-reactive({
     
-    Year <- c(seq(2019, 2030, 1))
-    yearsdf <- as.data.frame(Year)
     
     baseline$SC <- input$year_sc
     baseline$SI <- input$year_si
     baseline$max_si <- input$max_siofsc
     baseline <- baseline %>% mutate(time_sc_si = SI - SC,
-                                  years_after_sc=Year-SC,
-                                  share_between_scsi = (years_after_sc/time_sc_si)*max_si,
-                                  per_si =case_when(Year>=SI ~ max_si,
-                                                    Year<=SC ~ 0,
-                                                    Year>SC & Year<SI ~ share_between_scsi),
-                                  share_bonus=per_si/max_si) 
+                                    years_after_sc=Year-SC,
+                                    share_between_scsi = (years_after_sc/time_sc_si)*max_si,
+                                    per_si =case_when(Year>=SI ~ max_si,
+                                                      Year<=SC ~ 0,
+                                                      Year>SC & Year<SI ~ share_between_scsi),
+                                    share_bonus=per_si/max_si) 
     
     baseline <- baseline %>% mutate(high_scale=case_when(high==1 ~ 1, high==0 ~ .9))
     
@@ -153,12 +135,12 @@ server <- function(input, output, session) {
              NonUser_2019=NonUser)
     baseline <- full_join(baseline, base2019, by="iso")
     
-
-    equations <- baseline %>% mutate(inj_switch_si_a=(((input$inj_to_si+(input$si_bonus*share_bonus)))*Injection_2019)/11,
-                                    stm_switch_si_a=(((input$stm_to_si+(input$si_bonus*share_bonus))*scale)*STM_2019)/11,
-                                    nu_switch_si_a=(((input$nu_to_si+(input$si_bonus*share_bonus))*scale)*NonUser_2019*ReasonNotUsingSI)/11) 
     
-
+    equations <- baseline %>% mutate(inj_switch_si_a=(((input$inj_to_si+(input$si_bonus*share_bonus)))*Injection_2019)/11,
+                                     stm_switch_si_a=(((input$stm_to_si+(input$si_bonus*share_bonus))*scale)*STM_2019)/11,
+                                     nu_switch_si_a=(((input$nu_to_si+(input$si_bonus*share_bonus))*scale)*NonUser_2019*ReasonNotUsingSI)/11) 
+    
+    
     
     # Here is where the years since full scale matter- making annual numbers before it 0
     equations <- equations %>% mutate(year_fullscale= case_when(Year-SC<0 ~ 0, Year-SC>=0 ~ Year-SC+1 )) %>%
@@ -210,7 +192,6 @@ server <- function(input, output, session) {
     equations <- equations %>% mutate(injec_user_w_si=si_users+im_users)
     
     # IM Users, SI Users, and SC Users
-    equations <- full_join(equations, yearsdf, by="Year")
     equations <- equations %>% mutate(IM_injec_user_w_si=round(im_users),
                                       SCP_injec_user_w_si=round(si_users*(1-per_si)),
                                       SI_injec_user_w_si= round(si_users*(per_si)),
@@ -219,10 +200,9 @@ server <- function(input, output, session) {
                                       baseline_mcpr=round((baseline_users/Total)*100,1),
                                       additional_users=round(total_user_w_si-baseline_users))
     
-
     
-    })
-  
+    
+  })
   
   datlong<-reactive({
     
@@ -239,18 +219,41 @@ server <- function(input, output, session) {
     graph$Type <- factor(graph$Type, levels = c( "Injectable: SC (Self)", "Injectable: SC (Provider)", "Injectable: IM", "LTM", "STM", "Nonuser" ))
     
     
-    graph <- graph %>% filter(iso==vals$iso)  
+    graph <- graph %>% filter(iso %in% vals$iso)  
     
   })
   
+  output$plot1<-renderPlot({
+    
+    ggplot(datlong(),aes(x=Year,y=Number, fill=Type))+ 
+      geom_bar(stat="identity") +
+      labs(title="Number of Women", x="", y="", fill="")+
+      theme_bw()+
+      theme(legend.position = "bottom",
+            legend.text=element_text(size=12))
+    
+  }, height = 400,width = 700)
+  
+  output$adduser <- renderText({
+    
+    
+    addusers <- dat()  %>% ungroup() %>% 
+      filter(Year==2030) %>%
+      mutate(additional_users=total_user_w_si-baseline_users)  %>% select(iso, additional_users) 
+    addusers <- addusers %>% filter(iso %in% vals$iso) 
+    
+    add <- addusers$additional_users[1]
+    paste("Additional Users in 2030:", round(add))
+    
+  })
   
   mcprdata<-reactive({
     
     mcpr <-  dat() %>% select(iso, Year, mcpr_w_si, baseline_mcpr ) %>%    gather(Type, Number, mcpr_w_si:baseline_mcpr )  %>%
       mutate(Type= case_when(Type=="mcpr_w_si" ~ "mCPR with SC Introduction",
-             Type=="baseline_mcpr" ~ "mCPR without SC Introduction"))
-
-    mcpr <- mcpr %>% filter(iso==vals$iso) 
+                             Type=="baseline_mcpr" ~ "mCPR without SC Introduction"))
+    
+    mcpr <- mcpr %>% filter(iso %in% vals$iso) 
     
     
   })
@@ -267,48 +270,11 @@ server <- function(input, output, session) {
                             Type=="prop_si_disc" ~ "Reduced Discontinuation",
                             Type=="prop_si_uptake" ~ "Uptake"))
     
-    sc_users2030 <- sc_users2030 %>% filter(iso==vals$iso) 
+    sc_users2030 <- sc_users2030 %>% filter(iso %in% vals$iso) 
     
     
   })
   
-  
-  
-  
-  output$adduser <- renderText({
-    
-    
-    addusers <- dat()  %>% ungroup() %>% 
-      filter(Year==2030) %>%
-      mutate(additional_users=total_user_w_si-baseline_users)  %>% select(iso, additional_users) 
-    addusers <- addusers %>% filter(iso==vals$iso) 
-    
-    add <- addusers$additional_users[1]
-    paste("Additional Users in 2030:", round(add))
-    
-  })
-
-  
-  
-  output$table <- renderDataTable({
-    
-    
-    table <- dat() %>% select(iso, Year,  SI_injec_user_w_si, SCP_injec_user_w_si, IM_injec_user_w_si, mcpr_w_si) 
-    table <- table %>% filter(iso==vals$iso)
-    table <- table %>% rename("Self-Injectable Users"=SI_injec_user_w_si, "Provider Injected SC Users"=SCP_injec_user_w_si, "Intramuscular Injectable Users"=IM_injec_user_w_si, "mCPR"=mcpr_w_si, ISO=iso)
-  })
-  
-  output$plot1<-renderPlot({
-
-    ggplot(datlong(),aes(x=Year,y=Number, fill=Type))+ 
-      geom_bar(stat="identity") +
-      labs(title="Number of Women", x="", y="", fill="")+
-      theme_bw()+
-      theme(legend.position = "bottom",
-            legend.text=element_text(size=12))
-    
-    }, height = 400,width = 700)
-
   output$plot2<-renderPlot({
     
     ggplot(mcprdata(),aes(x=Year,y=Number, color=Type))+ 
@@ -328,7 +294,7 @@ server <- function(input, output, session) {
       geom_bar(stat="identity") +
       labs(title="Where Do SC Users Come From?", x="", y="", fill="")+
       guides(fill=guide_legend(nrow=3, byrow=TRUE))+
-    theme_bw()+
+      theme_bw()+
       theme(legend.position = "bottom",
             legend.text=element_text(size=12),
             axis.text.x=element_blank(),
@@ -340,10 +306,20 @@ server <- function(input, output, session) {
   
   
   
+  
+  output$table <- renderDataTable({
+    
+    
+    table <- dat() %>% select(iso, Year,  SI_injec_user_w_si, SCP_injec_user_w_si, IM_injec_user_w_si, mcpr_w_si) 
+    table <- table %>% filter(iso %in% vals$iso)
+    table <- table %>% rename("Self-Injectable Users"=SI_injec_user_w_si, "Provider Injected SC Users"=SCP_injec_user_w_si, "Intramuscular Injectable Users"=IM_injec_user_w_si, "mCPR"=mcpr_w_si, ISO=iso)
+  })
+  
   output$Notes <- renderText({ 
-    paste("Notes:", baseline$Country_note[baseline$Country==input$var & baseline$Year==2019])
+    paste("Notes:", baseline$Country_note[baseline$Country %in% input$var & baseline$Year==2019])
     
   })
+  
   
 }
 

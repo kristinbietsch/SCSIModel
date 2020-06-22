@@ -7,16 +7,7 @@ library(ggplot2)
 setwd("C:/Users/KristinBietsch/files/Track20/Win Requests/Self Injections")
 
 # Baseline Data
-baseline <- read.csv("BaselineData052920.csv")
-default <- read.csv("DefaultData062220.csv")
-
-default <- default%>% select(-Country)
-
-parameters <- read.csv("ParameterData061820.csv")
-
-# combine
-baseline <- full_join(baseline, default, by="iso")
-baseline <- full_join(baseline, parameters, by="iso")
+baseline <- read.csv("ModelData062220.csv")
 
 
 # Adaptable Parameters
@@ -138,7 +129,7 @@ equations <- equations %>% mutate(IM_injec_user_w_si=round(im_users),
 
 
 # Gates Priority Coutries
-gates <- equations %>% filter(iso== 566 | iso==404 | iso==854 | iso==586 | iso==800 | iso==686 | iso==454 )
+gates <- equations %>% filter(iso== 566 | iso==404 | iso==854 | iso==586 | iso==800 | iso==686 | iso==454 ) %>% filter(Year==2030) %>% select(Country, iso,  additional_users)
 
 write.csv(gates, "Gates Priority Countries SI 062220 With Change in NonUsers.csv", row.names = F)
 

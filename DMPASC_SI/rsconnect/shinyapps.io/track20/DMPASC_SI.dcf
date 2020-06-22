@@ -1,0 +1,13 @@
+name: DMPASC_SI
+title: DMPASC_SI
+username:
+account: track20
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2490278
+bundleId: 3303903
+url: https://track20.shinyapps.io/DMPASC_SI/
+when: 1592863869.09155
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: code taken out of shiny app.R
