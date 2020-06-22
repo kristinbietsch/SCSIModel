@@ -8,7 +8,8 @@ setwd("C:/Users/KristinBietsch/files/Track20/Win Requests/Self Injections")
 
 # Baseline Data
 baseline <- read.csv("BaselineData052920.csv")
-default <- read.csv("DefaultData061120.csv")
+default <- read.csv("DefaultData062220.csv")
+
 default <- default%>% select(-Country)
 
 parameters <- read.csv("ParameterData061820.csv")
@@ -134,9 +135,21 @@ equations <- equations %>% mutate(IM_injec_user_w_si=round(im_users),
                                   baseline_mcpr=round((baseline_users/Total)*100,1),
                                   additional_users=round(total_user_w_si-baseline_users))
 
+
+
+# Gates Priority Coutries
+gates <- equations %>% filter(iso== 566 | iso==404 | iso==854 | iso==586 | iso==800 | iso==686 | iso==454 )
+
+write.csv(gates, "Gates Priority Countries SI 062220 With Change in NonUsers.csv", row.names = F)
+
+
 # Results 2030
 results <- equations %>% select(iso, Year, baseline_mcpr, mcpr_w_si, additional_users, total_user_w_si, baseline_users, Total, SI_injec_user_w_si, SCP_injec_user_w_si, IM_injec_user_w_si, non_users) %>%
     filter(Year==2030)
+
+
+
+
 # Overall change in mcpr/number of users
 sum2030 <- results %>% ungroup() %>% summarise(total_user_w_si=sum(total_user_w_si), baseline_users=sum(baseline_users), Total=sum(Total)) %>% mutate(addition=total_user_w_si-baseline_users, mcpr_si=total_user_w_si/Total, mcpr_nosi=baseline_users/Total)
 ############################################################

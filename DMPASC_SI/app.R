@@ -9,7 +9,7 @@ library(tidyr)
 
 # Read in data
 baseline <- read.csv("data/BaselineData052920.csv")
-default <- read.csv("data/DefaultData061720.csv")
+default <- read.csv("data/DefaultData062220.csv")
 default <- default %>% select(-Country)
 parameters <- read.csv("data/ParameterData061820.csv")
 
@@ -42,7 +42,7 @@ ui <- fluidPage(
                                                 value=0.08, min = 0, max = 1, step = .01))   ),
                   fluidRow( column(10, 
                                    numericInput("nu_to_si", 
-                                                h5("Proportion of non-users, whose reasons for not using would be alleviated by benefits of subcutaneous injection (decreased side-effects, increased availability, ease of use) that will uptake subcutaneous injectable contraceptives"), 
+                                                h5("Proportion of non-users, whose fecund and do not want a child in the next year, that will uptake subcutaneous injectable contraceptives"), 
                                                 value=0.04, min = 0, max = 1, step = .01))   ),
                   fluidRow( column(10, 
                                    numericInput("si_bonus", 
@@ -154,12 +154,11 @@ server <- function(input, output, session) {
     baseline <- full_join(baseline, base2019, by="iso")
     
 
-    baseline <- baseline %>% mutate(inj_switch_si_a=(((input$inj_to_si+(input$si_bonus*share_bonus)))*Injection_2019)/11,
+    equations <- baseline %>% mutate(inj_switch_si_a=(((input$inj_to_si+(input$si_bonus*share_bonus)))*Injection_2019)/11,
                                     stm_switch_si_a=(((input$stm_to_si+(input$si_bonus*share_bonus))*scale)*STM_2019)/11,
                                     nu_switch_si_a=(((input$nu_to_si+(input$si_bonus*share_bonus))*scale)*NonUser_2019*ReasonNotUsingSI)/11) 
     
-    equations <- baseline
-    
+
     
     # Here is where the years since full scale matter- making annual numbers before it 0
     equations <- equations %>% mutate(year_fullscale= case_when(Year-SC<0 ~ 0, Year-SC>=0 ~ Year-SC+1 )) %>%
@@ -317,7 +316,8 @@ server <- function(input, output, session) {
       labs(title="Effect for Self-Injectable Introduction on mCPR", x="", y="mCPR (AW)", color="")+
       theme_bw()+
       theme(legend.position = "bottom",
-            legend.text=element_text(size=12))
+            legend.text=element_text(size=12),
+            axis.text.x=element_text(size=12))
     
   }, height = 400,width = 500)
   
@@ -331,7 +331,6 @@ server <- function(input, output, session) {
     theme_bw()+
       theme(legend.position = "bottom",
             legend.text=element_text(size=12),
-            axis.text.y=element_text(size=12),
             axis.text.x=element_blank(),
             axis.ticks.x=element_blank())
     

@@ -5,8 +5,8 @@ account: track20
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2410154
-bundleId: 3302981
+bundleId: 3303608
 url: https://track20.shinyapps.io/ShinyApp060420b/
-when: 1592848158.75216
+when: 1592858533.2719
 asMultiple: FALSE
 asStatic: FALSE
