@@ -8,13 +8,13 @@ library(tidyr)
 #setwd("C:/Users/KristinBietsch/files/Track20/Win Requests/Self Injections/DMPASC_SI")
 
 # Read in data
-baseline <- read.csv("data/ModelData062220.csv")
+baseline <- read.csv("data/ModelData010722.csv")
 
 
 
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
-  titlePanel(h1("Potential Market of Subcutaneous and Self-Injectable Contraceptive Users in FP2020 Countries through 2030")),
+  titlePanel(h1("Potential Market of Subcutaneous and Self-Injectable Contraceptive Users in Low and Lower-Middle Income Countries through 2030")),
   
   sidebarLayout(
     sidebarPanel(img(src = "logo_150_trans1.png"),
@@ -34,11 +34,11 @@ ui <- fluidPage(
                                                 value=0.08, min = 0, max = 1, step = .01))   ),
                   fluidRow( column(10, 
                                    numericInput("nu_to_si", 
-                                                h5("Proportion of non-users, whose fecund and do not want a child in the next year, that will uptake subcutaneous injectable contraceptives"), 
+                                                h5("Proportion of fecund non-users who do not want a child in the next year that will uptake to SC"), 
                                                 value=0.04, min = 0, max = 1, step = .01))   ),
                   fluidRow( column(10, 
                                    numericInput("si_bonus", 
-                                                h5("Increase in each of the above parameter when self-injection of subcutaneous becomes fully available (partial bonus awarded during scale up)"), 
+                                                h5("SI Bonus: Each of the above parameters experiences an increase when SI is at full scale (partial bonus awarded during scale up)"), 
                                                 value=0.01, min = 0, max = 1, step = .01))   ),
                   fluidRow( column(10, 
                                    numericInput("max_siofsc", 
@@ -56,7 +56,7 @@ ui <- fluidPage(
         column(5, 
                sliderInput("year_si", h4("Year self-injection reaches maximum"),
                            min = 2019, max = 2030, value = 2024, sep=""))),
-      h4("Note: Subcutaneous injectable must be at full scale before self-injection reaches maximum"),
+      h4("Note: Subcutaneous injectable must be at full scale before self-injection reaches maximum.  For SC at full scale: The method has moved out of the pilot stage and is as available as similar methods (for example, offered in as many places as intramuscular injectables).  For SI at full scale: Programs and regulations are in place for women to self-inject, and providers receive training on how to teach women to self-inject."),
       hr(),
       h1(textOutput("adduser")), 
       hr(),
@@ -268,7 +268,7 @@ server <- function(input, output, session) {
       mutate(Type=case_when(Type=="prop_si_im" ~ "Former IM",
                             Type=="prop_si_stm" ~ "Former STM",
                             Type=="prop_si_disc" ~ "Reduced Discontinuation",
-                            Type=="prop_si_uptake" ~ "Uptake"))
+                            Type=="prop_si_uptake" ~ "Uptake from Non-Users"))
     
     sc_users2030 <- sc_users2030 %>% filter(iso %in% vals$iso) 
     
